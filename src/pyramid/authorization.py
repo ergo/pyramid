@@ -138,3 +138,19 @@ class ACLAuthorizationPolicy(object):
             allowed.update(allowed_here)
 
         return allowed
+
+
+
+@implementer(INewAuthorizationPolicy)
+def CompatibilityAuthorizationPolicy:
+    def _get_legacy_authn(self, request):
+        return request.registry.queryUtility(IAuthenticationPolicy)
+
+    def _get_legacy_authz(self, request):
+        return request.registry.queryUtility(IAuthorizationPolicy)
+
+    def __call__(context, user, permission, request):
+        authn = self._get_legacy_authn(request)
+        authz = self._get_legacy_authz(request)
+        principals = authn.effective_principals(request)
+        return authz.permits(context, principals, permission)

@@ -306,8 +306,8 @@ def _secured_view(view, info):
         permission = None
 
     wrapped_view = view
-    authn_policy = info.registry.queryUtility(IAuthenticationPolicy)
-    authz_policy = info.registry.queryUtility(IAuthorizationPolicy)
+    authn_policy = info.registry.queryUtility(INewAuthenticationPolicy)
+    authz_policy = info.registry.queryUtility(INewAuthorizationPolicy)
 
     # no-op on exception-only views without an explicit permission
     if explicit_val is None and info.exception_only:
@@ -316,8 +316,8 @@ def _secured_view(view, info):
     if authn_policy and authz_policy and (permission is not None):
 
         def permitted(context, request):
-            principals = authn_policy.effective_principals(request)
-            return authz_policy.permits(context, principals, permission)
+            user = authn_policy.get_user(request)
+            return authz_policy(context, user, permission, request)
 
         def secured_view(context, request):
             result = permitted(context, request)

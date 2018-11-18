@@ -549,6 +549,30 @@ class IAuthenticationPolicy(Interface):
 
         """
 
+class INewAuthenticationPolicy(Interface):
+    """ An object representing a Pyramid authentication policy. """
+
+    def get_user(request):
+        """
+        Return the authenticated user or ``None`` if no user is authenticated.
+
+        """
+
+    def remember(request, userid, **kw):
+        """ Return a set of headers suitable for 'remembering' the
+        :term:`userid` named ``userid`` when set in a response.  An
+        individual authentication policy and its consumers can
+        decide on the composition and meaning of ``**kw``.
+
+        """
+
+    def forget(request):
+        """ Return a set of headers suitable for 'forgetting' the
+        current user on subsequent requests.
+
+        """
+
+
 
 class IAuthorizationPolicy(Interface):
     """ An object representing a Pyramid authorization policy. """
@@ -568,6 +592,14 @@ class IAuthorizationPolicy(Interface):
         will only be called when the
         ``pyramid.security.principals_allowed_by_permission`` API is
         used."""
+
+
+class INewAuthorizationPolicy(Interface):
+    def __call__(context, user, permission, request):
+        """ Return an instance of :class:`pyramid.security.Allowed` if the
+        given user is allowed ``permission`` in the current ``context``, else
+        return an instance of :class:`pyramid.security.Denied`.
+        """
 
 
 class IMultiDict(IDict):  # docs-only interface

@@ -113,6 +113,14 @@ class SecurityConfiguratorMixin(object):
         self.registry.registerUtility(policy, IAuthorizationPolicy)
 
     @action_method
+    def set_new_authentication_policy(self, policy):
+        "TODO"
+
+    @action_method
+    def set_new_authorization_policy(self, policy):
+        "TODO"
+
+    @action_method
     def set_default_permission(self, permission):
         """
         Set the default permission to be used by all subsequent

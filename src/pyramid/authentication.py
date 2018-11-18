@@ -1261,3 +1261,21 @@ def extract_http_basic_credentials(request):
         return None
 
     return HTTPBasicCredentials(username, password)
+
+
+@implementer(INewAuthenticationPolicy)
+class CompatibilityAuthenticationPolicy:
+    def _get_legacy_authn(self, request):
+        return request.registry.queryUtility(IAuthenticationPolicy)
+
+    def get_user(self, request):
+        policy = self._get_legacy_authn(request)
+        return policy.authenticated_userid(request)
+
+    def remember(request, userid, **kw):
+        policy = self._get_legacy_authn(request)
+        return policy.remember(userid, **kw)
+
+    def forget(request):
+        policy = self._get_legacy_authn(request)
+        return policy.forget(request)

@@ -46,7 +46,12 @@ def _get_registry(request):
 
 def _get_authentication_policy(request):
     registry = _get_registry(request)
-    return registry.queryUtility(IAuthenticationPolicy)
+    return registry.queryUtility(INewAuthenticationPolicy)
+
+
+def _get_legacy_authentication_policy(request):
+    registry = _get_registry(request)
+    return registry.queryUtility(INewAuthenticationPolicy)
 
 
 def remember(request, userid, **kw):
@@ -127,6 +132,10 @@ def principals_allowed_by_permission(context, permission):
        required machinery for this function; those will cause a
        :exc:`NotImplementedError` exception to be raised when this
        function is invoked.
+
+    .. deprecated:: 2.0
+
+        Principals are no longer part of the authentication/authorization API.
     """
     reg = get_current_registry()
     policy = reg.queryUtility(IAuthorizationPolicy)
@@ -283,14 +292,24 @@ class ACLAllowed(ACLPermitsResult, Allowed):
 
 class AuthenticationAPIMixin(object):
     @property
+    def user(self):
+        """ Returns the currently authenticated user or ``None`` if there is no
+        authenticated user.
+        """
+
+    @property
     def authenticated_userid(self):
         """ Return the userid of the currently authenticated user or
         ``None`` if there is no :term:`authentication policy` in effect or
         there is no currently authenticated user.
 
-        .. versionadded:: 1.5
+        .. deprecated:: 2.0
+
+            New-style authentication provides
+            :attr:`~pyramid.request.Request.user`
+
         """
-        policy = _get_authentication_policy(self)
+        policy = _get_legacy_authentication_policy(self)
         if policy is None:
             return None
         return policy.authenticated_userid(self)
@@ -305,9 +324,13 @@ class AuthenticationAPIMixin(object):
         effective authentication policy will not ensure that a record
         associated with the userid exists in persistent storage.
 
-        .. versionadded:: 1.5
+        .. deprecated:: 2.0
+
+            New-style authentication provides
+            :attr:`~pyramid.request.Request.user`
+
         """
-        policy = _get_authentication_policy(self)
+        policy = _get_legacy_authentication_policy(self)
         if policy is None:
             return None
         return policy.unauthenticated_userid(self)
@@ -319,7 +342,11 @@ class AuthenticationAPIMixin(object):
         this will return a one-element list containing the
         :data:`pyramid.security.Everyone` principal.
 
-        .. versionadded:: 1.5
+        .. deprecated:: 2.0
+
+            Principals have been moved out of the authentication API and are
+            now an implementation detail.
+
         """
         policy = _get_authentication_policy(self)
         if policy is None:
@@ -362,5 +389,5 @@ class AuthorizationAPIMixin(object):
                 'Authentication policy registered without '
                 'authorization policy'
             )  # should never happen
-        principals = authn_policy.effective_principals(self)
-        return authz_policy.permits(context, principals, permission)
+        user = authn_policy.user(self)
+        return authz_policy(context, user, permission, request)
