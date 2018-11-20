@@ -497,6 +497,22 @@ class IViewMapperFactory(Interface):
         """
 
 
+class IIdentityPolicy(Interface):
+    """ An object representing a Pyramid identity policy. """
+
+    def identify(request):
+        """ Return the claimed identity of the user associated with the request
+        or ``None`` if no identity can be found associated with the request.
+
+        """
+
+    def remember(request, userid, **kw):
+        """ TODO:  Do something with this? """
+
+    def forget(request):
+        """ TODO:  Do something with this? """
+
+
 class IAuthenticationPolicy(Interface):
     """ An object representing a Pyramid authentication policy. """
 
@@ -568,6 +584,20 @@ class IAuthorizationPolicy(Interface):
         will only be called when the
         ``pyramid.security.principals_allowed_by_permission`` API is
         used."""
+
+
+class INewAuthorizationPolicy(Interface):
+    """ An object representing a Pyramid authorization policy. """
+
+    def permits(context, identity, permission, request):
+        """ Return an instance of :class:`pyramid.security.Allowed` if the user
+        is allowed the ``permission`` in the current ``context``, else return
+        an instance of :class:`pyramid.security.Denied`.
+
+        """
+
+    def authorized_userid(self, identity):
+        """ TODO:  Can I eliminate this? """
 
 
 class IMultiDict(IDict):  # docs-only interface

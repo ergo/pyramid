@@ -9,6 +9,25 @@ from pyramid.compat import is_nonstr_iter
 from pyramid.security import ACLAllowed, ACLDenied, Allow, Deny, Everyone
 
 
+@implementer(INewAuthorizationPolicy)
+def CompatibilityAuthorizationPolicy(object):
+    """ An new-style authorization policy that shims an old-style authorization
+    policy.
+    """
+    def __init__(self, policy):
+        self._policy = policy
+
+    def permits(self, context, identity, permission, request):
+        authn = request.registry.queryUtility(IAuthenticationPolicy)
+        if authn is None:
+            raise ValueError(
+                'An authentication policy is required to use '
+                'CompatabilityAuthorizationPolicy'
+            )
+        principals = authn.effective_principals(request)
+        return self._policy.permits(context, principals, permission)
+
+
 @implementer(IAuthorizationPolicy)
 class ACLAuthorizationPolicy(object):
     """ An :term:`authorization policy` which consults an :term:`ACL`
@@ -59,6 +78,7 @@ class ACLAuthorizationPolicy(object):
 
     Objects of this class implement the
     :class:`pyramid.interfaces.IAuthorizationPolicy` interface.
+
     """
 
     def permits(self, context, principals, permission):

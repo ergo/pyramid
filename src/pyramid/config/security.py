@@ -22,6 +22,17 @@ class SecurityConfiguratorMixin(object):
         self.set_csrf_storage_policy(LegacySessionCSRFStoragePolicy())
 
     @action_method
+    def set_identity_policy(self, policy):
+        pass  # TODO
+
+    @action_method
+    def set_new_authorization_policy(self, policy):
+        pass  # TODO
+        # Q:  We could also modify set_authorization_policy to introspect the
+        # policy and determine if it's old- or new-style?  Or would that
+        # have too many potential pitfalls?
+
+    @action_method
     def set_authentication_policy(self, policy):
         """ Override the :app:`Pyramid` :term:`authentication policy` in the
         current configuration.  The ``policy`` argument must be an instance
@@ -62,6 +73,7 @@ class SecurityConfiguratorMixin(object):
 
     def _set_authentication_policy(self, policy):
         policy = self.maybe_dotted(policy)
+        # TODO:  Also register a CompatibilityIdentityPolicy
         self.registry.registerUtility(policy, IAuthenticationPolicy)
 
     @action_method

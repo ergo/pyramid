@@ -281,6 +281,17 @@ class ACLAllowed(ACLPermitsResult, Allowed):
     """
 
 
+class IdentityAPIMixin(object):
+    @property  # Q:  Can this be reified?  IMO, the identity shouldn't change
+               # within the request and some identity providers may be
+               # resource-hungry
+    def identity(self):
+        policy = reg.queryUtility(IIdentityPolicy)
+        if policy is None:
+            return None
+        return policy.identity(self)
+
+
 class AuthenticationAPIMixin(object):
     @property
     def authenticated_userid(self):
@@ -289,6 +300,11 @@ class AuthenticationAPIMixin(object):
         there is no currently authenticated user.
 
         .. versionadded:: 1.5
+
+        .. deprecated:: 2.0
+
+            Authentication policies have been deprecated in favor of identity
+            policies.
         """
         policy = _get_authentication_policy(self)
         if policy is None:
@@ -306,6 +322,11 @@ class AuthenticationAPIMixin(object):
         associated with the userid exists in persistent storage.
 
         .. versionadded:: 1.5
+
+        .. deprecated:: 2.0
+
+            Authentication policies have been deprecated in favor of identity
+            policies.
         """
         policy = _get_authentication_policy(self)
         if policy is None:
@@ -320,6 +341,11 @@ class AuthenticationAPIMixin(object):
         :data:`pyramid.security.Everyone` principal.
 
         .. versionadded:: 1.5
+
+        .. deprecated:: 2.0
+
+            Authentication policies have been deprecated in favor of identity
+            policies.
         """
         policy = _get_authentication_policy(self)
         if policy is None:
@@ -347,20 +373,17 @@ class AuthorizationAPIMixin(object):
         :returns: Either :class:`pyramid.security.Allowed` or
                   :class:`pyramid.security.Denied`.
 
-        .. versionadded:: 1.5
-
         """
         if context is None:
             context = self.context
         reg = _get_registry(self)
-        authn_policy = reg.queryUtility(IAuthenticationPolicy)
-        if authn_policy is None:
-            return Allowed('No authentication policy in use.')
-        authz_policy = reg.queryUtility(IAuthorizationPolicy)
+        id_policy = reg.queryUtility(IIdentityPolicy)
+        if id_policy is None:
+            return Allowed('No identity policy in use.')
+        authz_policy = reg.queryUtility(INewAuthorizationPolicy)
         if authz_policy is None:
             raise ValueError(
-                'Authentication policy registered without '
-                'authorization policy'
+                'Authentication policy registered without identity policy'
             )  # should never happen
-        principals = authn_policy.effective_principals(self)
-        return authz_policy.permits(context, principals, permission)
+        identity = id_policy.identify(self)
+        return authz_policy.permits(context, identity, permission, self)
